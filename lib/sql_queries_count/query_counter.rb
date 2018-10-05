@@ -35,7 +35,7 @@ module SqlQueriesCount
       ignore = [/^PRAGMA (?!(table_info))/, /^SELECT currval/, /^SELECT CAST/, /^SELECT @@IDENTITY/, /^SELECT @@ROWCOUNT/, /^SAVEPOINT/, /^ROLLBACK TO SAVEPOINT/, /^RELEASE SAVEPOINT/, /^SHOW max_identifier_length/, /^SET/]
       return if ignore.any? { |r| event.payload[:sql] =~ r }
 
-      if event.payload[:name] == 'CACHE'
+      if event.payload[:cached] || event.payload[:name] == 'CACHE'
         self.class.cached_counter += 1
       else
         self.class.counter += 1
