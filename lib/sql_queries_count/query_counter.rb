@@ -1,6 +1,8 @@
 module SqlQueriesCount
 
   class QueryCounter < ActiveSupport::LogSubscriber
+    IGNORE_PAYLOAD_NAMES = ["SCHEMA", "EXPLAIN"]
+
     def self.counter=(value)
       Thread.current["active_record_sql_count"] = value
     end
@@ -32,10 +34,11 @@ module SqlQueriesCount
     end
 
     def sql(event)
-      ignore = [/^PRAGMA (?!(table_info))/, /^SELECT currval/, /^SELECT CAST/, /^SELECT @@IDENTITY/, /^SELECT @@ROWCOUNT/, /^SAVEPOINT/, /^ROLLBACK TO SAVEPOINT/, /^RELEASE SAVEPOINT/, /^SHOW max_identifier_length/, /^SET/]
-      return if ignore.any? { |r| event.payload[:sql] =~ r }
+      payload = event.payload
 
-      if event.payload[:cached] || event.payload[:name] == 'CACHE'
+      return if IGNORE_PAYLOAD_NAMES.include?(payload[:name])
+
+      if payload[:cached] || payload[:name] == 'CACHE'
         self.class.cached_counter += 1
       else
         self.class.counter += 1
